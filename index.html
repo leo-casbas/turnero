@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmacia de Turno</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(to right, #f1f8e9, #e3f2fd); /* verde claro + azul suave */
+      color: #333;
+    }
+    header {
+      background: #66bb6a; /* verde más claro */
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    nav a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    nav a:hover {
+      color: #c8e6c9;
+    }
+    section {
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      max-width: 700px;
+      margin: auto;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+    .card:hover {
+      transform: scale(1.02);
+    }
+    h1, h2 {
+      color: #388e3c; /* verde más suave */
+    }
+    h1 {
+      font-size: 2.2rem;
+    }
+    h2 {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #0277bd;
+    }
+    img.cruz {
+      width: 100px;
+      margin-bottom: 1rem;
+    }
+    input, button, select {
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    button {
+      background: #66bb6a; /* verde claro */
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #43a047; /* verde un poco más intenso */
+    }
+    footer {
+      background: #66bb6a;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Farmacia de Turno</h1>
+    <nav>
+      <a onclick="mostrarSeccion('home')">Home</a>
+      <a onclick="loginAdmin()">Administrador</a>
+    </nav>
+  </header>
+
+  <section id="home">
+    <div class="card">
+      <!-- Imagen de cruz verde -->
+      <img src="https://rioceballos.tur.ar/wp-content/uploads/2025/11/farmacia-05-2-768x465.png" alt="Cruz verde farmacia" class="cruz">
+      <h2>Farmacia en Turno Hoy</h2>
+      <p id="farmacia-turno"></p>
+    </div>
+  </section>
+
+  <section id="admin" class="hidden">
+    <div class="card">
+      <h2>Panel Administrador</h2>
+      <p>Modifica el orden de los turnos:</p>
+      <div id="orden-farmacias"></div>
+      <button onclick="guardarOrden()">Guardar Orden</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 Farmacias de Turno</p>
+  </footer>
+
+  <script>
+    let farmacias = JSON.parse(localStorage.getItem("farmacias")) || 
+      ["Farmacia Zuloaga", "Farmacia Trecco", "Farmacia Rola", "Farmacia Martinez"];
+
+    const claveAdmin = "1234"; // Cambia esta clave por una más segura
+
+    function mostrarSeccion(seccion) {
+      document.getElementById('home').classList.add('hidden');
+      document.getElementById('admin').classList.add('hidden');
+      document.getElementById(seccion).classList.remove('hidden');
+    }
+
+    function loginAdmin() {
+      const clave = prompt("Ingrese la clave de administrador:");
+      if (clave === claveAdmin) {
+        mostrarSeccion('admin');
+      } else {
+        alert("Clave incorrecta");
+      }
+    }
+
+    function calcularTurno() {
+      const hoy = new Date();
+      let dia = hoy.getDay(); // 0=Domingo, 1=Lunes, ..., 6=Sábado
+      const hora = hoy.getHours();
+
+      if (hora < 8) {
+        dia = (dia - 1 + 7) % 7;
+      }
+
+      let indice;
+      if (dia === 5 || dia === 6 || dia === 0) {
+        indice = 3; // Viernes, Sábado y Domingo → última farmacia del orden
+      } else {
+        indice = (dia - 1) % farmacias.length; // Lunes=0 → primera farmacia
+      }
+
+      document.getElementById("farmacia-turno").textContent = farmacias[indice];
+    }
+
+    function mostrarOrdenAdmin() {
+      const contenedor = document.getElementById("orden-farmacias");
+      contenedor.innerHTML = "";
+      farmacias.forEach((farmacia, i) => {
+        contenedor.innerHTML += `
+          <label>Posición ${i+1}:
+            <select id="select-${i}">
+              ${farmacias.map(f => `<option value="${f}" ${f===farmacia?"selected":""}>${f}</option>`).join("")}
+            </select>
+          </label><br>
+        `;
+      });
+    }
+
+    function guardarOrden() {
+      const nuevoOrden = [];
+      for (let i=0; i<farmacias.length; i++) {
+        nuevoOrden.push(document.getElementById(`select-${i}`).value);
+      }
+      farmacias = nuevoOrden;
+      localStorage.setItem("farmacias", JSON.stringify(farmacias));
+      alert("Orden actualizado correctamente");
+      calcularTurno();
+    }
+
+    // Inicialización
+    calcularTurno();
+    mostrarOrdenAdmin();
+  </script>
+</body>
+</html>
