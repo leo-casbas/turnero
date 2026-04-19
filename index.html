@@ -1,111 +1,214 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farmacia de Turno - Leo Casbas</title>
-    <style>
-        :root { --primary: #2e7d32; --accent: #c8e6c9; --text: #333; --bg: #f5f5f5; }
-        body { font-family: sans-serif; margin: 0; padding: 0; background: var(--bg); text-align: center; }
-        header { background: var(--primary); color: white; padding: 1rem; }
-        .container { max-width: 500px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .farmacia-box { border: 2px solid var(--accent); padding: 1rem; border-radius: 8px; margin: 1rem 0; }
-        
-        /* Mantenemos tu estructura de estilos exacta */
-        #nombre-farmacia { font-size: 1.4rem; font-weight: bold; display: block; }
-        #direccion-farmacia { display: block; margin-top: 5px; color: #666; }
-        
-        .admin-panel { margin-top: 2rem; border-top: 1px solid #ddd; padding-top: 1rem; }
-        input { width: 90%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
-        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #1b5e20; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmacia de Turno</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(to right, #f1f8e9, #e3f2fd);
+      color: #333;
+    }
+    header {
+      background: #66bb6a;
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    nav a {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    nav a:hover { color: #c8e6c9; }
+    section { padding: 2rem; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      max-width: 700px;
+      margin: auto;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+    .card:hover { transform: scale(1.02); }
+    h1, h2 { color: #388e3c; }
+    h1 { font-size: 2.2rem; }
+    h2 { font-size: 1.6rem; margin-bottom: 1rem; }
+    p { font-size: 1.3rem; font-weight: bold; color: #0277bd; }
+    img.cruz { width: 100px; margin-bottom: 1rem; }
+    input, button, select {
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    button {
+      background: #66bb6a;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+      border: none;
+    }
+    button:hover { background: #43a047; }
+    footer {
+      background: #66bb6a;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
+    .hidden { display: none; }
+  </style>
 </head>
 <body>
-    <header><h1>Farmacia de Turno</h1></header>
-    <div class="container">
-        <h2>Hoy de Turno:</h2>
-        <div class="farmacia-box">
-            <span id="nombre-farmacia">Cargando...</span>
-            <span id="direccion-farmacia">Conectando al servidor...</span>
-        </div>
-        
-        <div class="admin-panel">
-            <h3>Actualizar Turno (Admin)</h3>
-            <input type="text" id="nuevo-nombre" placeholder="Nombre de Farmacia">
-            <input type="text" id="nueva-direccion" placeholder="Dirección">
-            <button id="btn-actualizar" onclick="actualizar()">Guardar en Servidor</button>
-        </div>
+  <header>
+    <h1>Farmacia de Turno</h1>
+    <nav>
+      <a onclick="mostrarSeccion('home')">Home</a>
+      <a onclick="loginAdmin()">Administrador</a>
+    </nav>
+  </header>
+
+  <section id="home">
+    <div class="card">
+      <img src="https://rioceballos.tur.ar/wp-content/uploads/2025/11/farmacia-05-2-768x465.png" alt="Cruz verde farmacia" class="cruz">
+      <h2>Farmacia en Turno Hoy</h2>
+      <p id="farmacia-turno">Cargando...</p>
     </div>
+  </section>
 
-    <script>
-        // URL de tu Google Apps Script ya integrada
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9yeA_Tf-eD5ywAEQvS9LsY7vAQC7gJPxqiIAZf6ygJu1hG0LQHIFjeAoTyHnP-s4x/exec";
+  <section id="admin" class="hidden">
+    <div class="card">
+      <h2>Panel Administrador</h2>
+      <p>Modifica el orden de los turnos:</p>
+      <div id="orden-farmacias"></div>
+      <button id="btn-guardar" onclick="guardarOrden()">Guardar Orden</button>
+    </div>
+  </section>
 
-        // Función para leer los datos de Google Sheets
-        async function cargar() {
-            try {
-                const res = await fetch(SCRIPT_URL);
-                const data = await res.json();
-                
-                if(data && data.length > 0) {
-                    // El primer elemento del array es la farmacia actual
-                    document.getElementById('nombre-farmacia').innerText = data[0].Nombre;
-                    document.getElementById('direccion-farmacia').innerText = data[0].Dirección;
-                } else {
-                    document.getElementById('nombre-farmacia').innerText = "Sin turnos";
-                    document.getElementById('direccion-farmacia').innerText = "La lista está vacía";
-                }
-            } catch(e) { 
-                console.error("Error al cargar", e); 
-                document.getElementById('nombre-farmacia').innerText = "Error de conexión";
-            }
+  <footer>
+    <p>&copy; 2026 Farmacias de Turno</p>
+  </footer>
+
+  <script>
+    // URL DE TU GOOGLE APPS SCRIPT
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9yeA_Tf-eD5ywAEQvS9LsY7vAQC7gJPxqiIAZf6ygJu1hG0LQHIFjeAoTyHnP-s4x/exec";
+    
+    // Lista inicial (se actualizará con lo que haya en el servidor)
+    let farmacias = ["Farmacia Zuloaga", "Farmacia Trecco", "Farmacia Martinez", "Farmacia Rola"];
+    const claveAdmin = "1234";
+
+    function mostrarSeccion(seccion) {
+      document.getElementById('home').classList.add('hidden');
+      document.getElementById('admin').classList.add('hidden');
+      document.getElementById(seccion).classList.remove('hidden');
+    }
+
+    function loginAdmin() {
+      const clave = prompt("Ingrese la clave de administrador:");
+      if (clave === claveAdmin) {
+        mostrarSeccion('admin');
+        mostrarOrdenAdmin();
+      } else {
+        alert("Clave incorrecta");
+      }
+    }
+
+    // CARGAR DATOS DESDE GOOGLE SHEETS
+    async function cargarDatos() {
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const data = await res.json();
+        if (data.length > 0) {
+          // Extraemos solo los nombres de la columna 'Nombre' del Excel
+          farmacias = data.map(item => item.Nombre);
         }
+        calcularTurno();
+      } catch (e) {
+        console.error("Error cargando datos:", e);
+        calcularTurno(); // Si falla, usa la lista por defecto
+      }
+    }
 
-        // Función para enviar los datos a Google Sheets
-        async function actualizar() {
-            const n = document.getElementById('nuevo-nombre').value;
-            const d = document.getElementById('nueva-direccion').value;
-            const btn = document.getElementById('btn-actualizar');
+    function calcularTurno() {
+      const hoy = new Date();
+      let dia = hoy.getDay(); 
+      const hora = hoy.getHours();
 
-            if(!n || !d) return alert("Por favor, completa nombre y dirección");
-            
-            // Bloqueamos el botón visualmente para evitar doble clic
-            btn.innerText = "Guardando...";
-            btn.style.opacity = "0.5";
-            btn.disabled = true;
+      if (hora < 8) {
+        dia = (dia - 1 + 7) % 7;
+      }
 
-            const data = [{"Nombre": n, "Dirección": d, "Teléfono": "-"}];
-            
-            try {
-                // Enviamos los datos como POST
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Importante para Google Apps Script
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                alert("¡Orden guardado! Los cambios aparecerán en unos segundos.");
-                
-                // Limpiar campos y refrescar
-                document.getElementById('nuevo-nombre').value = "";
-                document.getElementById('nueva-direccion').value = "";
-                setTimeout(cargar, 2000); // Recarga la vista tras 2 segundos
-                
-            } catch(e) { 
-                alert("Error al guardar en el servidor");
-                console.error(e);
-            } finally {
-                btn.innerText = "Guardar en Servidor";
-                btn.style.opacity = "1";
-                btn.disabled = false;
-            }
-        }
+      let indice;
+      if (dia === 5 || dia === 6 || dia === 0) {
+        indice = farmacias.length - 1; // Última farmacia del orden
+      } else {
+        indice = (dia - 1) % farmacias.length; 
+      }
 
-        // Ejecutar carga al abrir la web
-        window.onload = cargar;
-    </script>
+      document.getElementById("farmacia-turno").textContent = farmacias[indice] || "No definida";
+    }
+
+    function mostrarOrdenAdmin() {
+      const contenedor = document.getElementById("orden-farmacias");
+      contenedor.innerHTML = "";
+      farmacias.forEach((farmacia, i) => {
+        contenedor.innerHTML += `
+          <div style="margin-bottom:10px;">
+            <label>Posición ${i+1}:</label>
+            <select id="select-${i}">
+              ${farmacias.map(f => `<option value="${f}" ${f===farmacia?"selected":""}>${f}</option>`).join("")}
+            </select>
+          </div>
+        `;
+      });
+    }
+
+    // GUARDAR EN GOOGLE SHEETS
+    async function guardarOrden() {
+      const btn = document.getElementById("btn-guardar");
+      const nuevoOrden = [];
+      for (let i=0; i<farmacias.length; i++) {
+        nuevoOrden.push({ "Nombre": document.getElementById(`select-${i}`).value, "Dirección": "-", "Teléfono": "-" });
+      }
+
+      btn.innerText = "Guardando...";
+      btn.disabled = true;
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify(nuevoOrden)
+        });
+        
+        alert("Orden guardado en el servidor correctamente");
+        farmacias = nuevoOrden.map(f => f.Nombre);
+        calcularTurno();
+        mostrarSeccion('home');
+      } catch (e) {
+        alert("Error al conectar con el servidor");
+      } finally {
+        btn.innerText = "Guardar Orden";
+        btn.disabled = false;
+      }
+    }
+
+    // Inicialización al cargar la página
+    window.onload = cargarDatos;
+  </script>
 </body>
 </html>
